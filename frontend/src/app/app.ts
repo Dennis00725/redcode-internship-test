@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './shared/navbar/navbar.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  standalone: true,
+  imports: [RouterOutlet, NavbarComponent],
+  template: `<app-navbar /><div class="container mt-4"><router-outlet /></div>`
 })
-export class App {
-  protected readonly title = signal('frontend');
+export class AppComponent implements OnInit {
+  ngOnInit() {
+    if (localStorage.getItem('darkMode') === 'true')
+      document.body.classList.add('dark-mode');
+  }
 }
