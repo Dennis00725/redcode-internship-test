@@ -1,0 +1,128 @@
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+interface Book { id?: number; title: string; author: string; publicationDate: string; }
+
+@Component({
+  selector: 'app-books',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="fas fa-book me-2 text-primary"></i>Books</h2>
+      <button class="btn btn-primary" (click)="openForm()">
+        <i class="fas fa-plus me-1"></i>Add New Book
+      </button>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card mb-4 shadow-sm" *ngIf="showForm">
+      <div class="card-body">
+        <h5 class="card-title">{{ editing ? 'Edit Book' : 'New Book' }}</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Title</label>
+            <input class="form-control" [(ngModel)]="form.title" placeholder="Book title">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Author</label>
+            <input class="form-control" [(ngModel)]="form.author" placeholder="Author name">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Publication Date</label>
+            <input class="form-control" type="date" [(ngModel)]="form.publicationDate">
+          </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-success" (click)="save()">
+            <i class="fas fa-save me-1"></i>{{ editing ? 'Update' : 'Save' }}
+          </button>
+          <button class="btn btn-secondary" (click)="showForm = false">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-primary">
+              <tr>
+                <th><i class="fas fa-heading me-1"></i>Title</th>
+                <th><i class="fas fa-user me-1"></i>Author</th>
+                <th><i class="fas fa-calendar me-1"></i>Published</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let book of books">
+                <td>{{ book.title }}</td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.publicationDate | date:'mediumDate' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-1" (click)="edit(book)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="delete(book.id!)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="books.length === 0">
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="fas fa-inbox fa-2x d-block mb-2"></i>No books yet. Add one!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+})
+export class BooksComponent implements OnInit {
+private api = 'http://localhost:5187/api/Books';
+  books: Book[] = [];
+  showForm = false;
+  editing = false;
+  form: Book = { title: '', author: '', publicationDate: '' };
+  editId?: number;
+
+  constructor(private http: HttpClient) {}
+  ngOnInit() { this.load(); }
+
+  load() { this.http.get<Book[]>(this.api).subscribe(b => this.books = b); }
+
+  openForm() {
+    this.form = { title: '', author: '', publicationDate: '' };
+    this.editing = false;
+    this.showForm = true;
+  }
+
+  edit(book: Book) {
+    this.form = { ...book, publicationDate: book.publicationDate.slice(0, 10) };
+    this.editId = book.id;
+    this.editing = true;
+    this.showForm = true;
+  }
+
+  save() {
+    if (this.editing) {
+      this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
+        this.load(); this.showForm = false;
+      });
+    } else {
+      this.http.post(this.api, this.form).subscribe(() => {
+        this.load(); this.showForm = false;
+      });
+    }
+  }
+
+  delete(id: number) {
+    if (confirm('Delete this book?'))
+      this.http.delete(`${this.api}/${id}`).subscribe(() => this.load());
+  }
+}
