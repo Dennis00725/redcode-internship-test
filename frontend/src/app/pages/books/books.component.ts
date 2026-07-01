@@ -24,22 +24,37 @@ interface Book { id?: number; title: string; author: string; publicationDate: st
         <div class="row g-3">
           <div class="col-md-4">
             <label class="form-label">Title</label>
-            <input class="form-control" [(ngModel)]="form.title" placeholder="Book title">
+            <input 
+              class="form-control"
+              [class.is-invalid]="submitted && !form.title"
+              [(ngModel)]="form.title" 
+              placeholder="Book title">
+            <div class="invalid-feedback">Title is required.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Author</label>
-            <input class="form-control" [(ngModel)]="form.author" placeholder="Author name">
+            <input 
+              class="form-control"
+              [class.is-invalid]="submitted && !form.author"
+              [(ngModel)]="form.author" 
+              placeholder="Author name">
+            <div class="invalid-feedback">Author is required.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Publication Date</label>
-            <input class="form-control" type="date" [(ngModel)]="form.publicationDate">
+            <input 
+              class="form-control" 
+              type="date"
+              [class.is-invalid]="submitted && !form.publicationDate"
+              [(ngModel)]="form.publicationDate">
+            <div class="invalid-feedback">Publication date is required.</div>
           </div>
         </div>
         <div class="mt-3 d-flex gap-2">
           <button class="btn btn-success" (click)="save()">
             <i class="fas fa-save me-1"></i>{{ editing ? 'Update' : 'Save' }}
           </button>
-          <button class="btn btn-secondary" (click)="showForm = false">Cancel</button>
+          <button class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
         </div>
       </div>
     </div>
@@ -84,10 +99,11 @@ interface Book { id?: number; title: string; author: string; publicationDate: st
   `
 })
 export class BooksComponent implements OnInit {
-private api = 'http://localhost:5187/api/Books';
+  private api = 'http://localhost:5187/api/Books';
   books: Book[] = [];
   showForm = false;
   editing = false;
+  submitted = false;
   form: Book = { title: '', author: '', publicationDate: '' };
   editId?: number;
 
@@ -98,25 +114,35 @@ private api = 'http://localhost:5187/api/Books';
 
   openForm() {
     this.form = { title: '', author: '', publicationDate: '' };
+    this.submitted = false;
     this.editing = false;
     this.showForm = true;
+  }
+
+  cancelForm() {
+    this.showForm = false;
+    this.submitted = false;
   }
 
   edit(book: Book) {
     this.form = { ...book, publicationDate: book.publicationDate.slice(0, 10) };
     this.editId = book.id;
+    this.submitted = false;
     this.editing = true;
     this.showForm = true;
   }
 
   save() {
+    this.submitted = true;
+    if (!this.form.title || !this.form.author || !this.form.publicationDate) return;
+
     if (this.editing) {
       this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
-        this.load(); this.showForm = false;
+        this.load(); this.showForm = false; this.submitted = false;
       });
     } else {
       this.http.post(this.api, this.form).subscribe(() => {
-        this.load(); this.showForm = false;
+        this.load(); this.showForm = false; this.submitted = false;
       });
     }
   }
