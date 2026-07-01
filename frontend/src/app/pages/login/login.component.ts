@@ -19,11 +19,22 @@ import { CommonModule } from '@angular/common';
             <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
             <div class="mb-3">
               <label class="form-label">Username</label>
-              <input class="form-control" [(ngModel)]="username" placeholder="Enter username">
+              <input 
+                class="form-control" 
+                [class.is-invalid]="submitted && !username"
+                [(ngModel)]="username" 
+                placeholder="Enter username">
+              <div class="invalid-feedback">Username is required.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Password</label>
-              <input class="form-control" type="password" [(ngModel)]="password" placeholder="Enter password">
+              <input 
+                class="form-control" 
+                type="password" 
+                [class.is-invalid]="submitted && !password"
+                [(ngModel)]="password" 
+                placeholder="Enter password">
+              <div class="invalid-feedback">Password is required.</div>
             </div>
             <button class="btn btn-primary w-100" (click)="login()">
               <i class="fas fa-sign-in-alt me-1"></i>Login
@@ -38,10 +49,17 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class LoginComponent {
-  username = ''; password = ''; error = '';
+  username = ''; 
+  password = ''; 
+  error = '';
+  submitted = false;
+  
   constructor(private auth: AuthService, private router: Router) {}
 
   login() {
+    this.submitted = true;
+    if (!this.username || !this.password) return;
+    
     this.auth.login(this.username, this.password).subscribe({
       next: () => this.router.navigate(['/books']),
       error: () => this.error = 'Invalid username or password.'
