@@ -19,11 +19,22 @@ import { CommonModule } from '@angular/common';
             <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
             <div class="mb-3">
               <label class="form-label">Username</label>
-              <input class="form-control" [(ngModel)]="username" placeholder="Choose username">
+              <input 
+                class="form-control"
+                [class.is-invalid]="submitted && !username"
+                [(ngModel)]="username" 
+                placeholder="Choose username">
+              <div class="invalid-feedback">Username is required.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Password</label>
-              <input class="form-control" type="password" [(ngModel)]="password" placeholder="Choose password">
+              <input 
+                class="form-control" 
+                type="password"
+                [class.is-invalid]="submitted && password.length < 6"
+                [(ngModel)]="password" 
+                placeholder="Choose password (min 6 characters)">
+              <div class="invalid-feedback">Password must be at least 6 characters.</div>
             </div>
             <button class="btn btn-success w-100" (click)="register()">
               <i class="fas fa-user-plus me-1"></i>Create Account
@@ -38,10 +49,17 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class RegisterComponent {
-  username = ''; password = ''; error = '';
+  username = ''; 
+  password = ''; 
+  error = '';
+  submitted = false;
+
   constructor(private auth: AuthService, private router: Router) {}
 
   register() {
+    this.submitted = true;
+    if (!this.username || this.password.length < 6) return;
+
     this.auth.register(this.username, this.password).subscribe({
       next: () => this.router.navigate(['/books']),
       error: (e) => this.error = e.error || 'Registration failed.'
