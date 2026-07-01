@@ -23,17 +23,28 @@ interface Quote { id?: number; text: string; author: string; }
         <h5>{{ editing ? 'Edit Quote' : 'New Quote' }}</h5>
         <div class="mb-3">
           <label class="form-label">Quote</label>
-          <textarea class="form-control" [(ngModel)]="form.text" rows="3" placeholder="Enter quote text"></textarea>
+          <textarea 
+            class="form-control"
+            [class.is-invalid]="submitted && !form.text"
+            [(ngModel)]="form.text" 
+            rows="3" 
+            placeholder="Enter quote text"></textarea>
+          <div class="invalid-feedback">Quote text is required.</div>
         </div>
         <div class="mb-3">
           <label class="form-label">Author</label>
-          <input class="form-control" [(ngModel)]="form.author" placeholder="Who said this?">
+          <input 
+            class="form-control"
+            [class.is-invalid]="submitted && !form.author"
+            [(ngModel)]="form.author" 
+            placeholder="Who said this?">
+          <div class="invalid-feedback">Author is required.</div>
         </div>
         <div class="d-flex gap-2">
           <button class="btn btn-warning" (click)="save()">
             <i class="fas fa-save me-1"></i>{{ editing ? 'Update' : 'Save' }}
           </button>
-          <button class="btn btn-secondary" (click)="showForm = false">Cancel</button>
+          <button class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
         </div>
       </div>
     </div>
@@ -67,10 +78,11 @@ interface Quote { id?: number; text: string; author: string; }
   `
 })
 export class QuotesComponent implements OnInit {
-private api = 'http://localhost:5187/api/Quotes';
+  private api = 'http://localhost:5187/api/Quotes';
   quotes: Quote[] = [];
   showForm = false;
   editing = false;
+  submitted = false;
   form: Quote = { text: '', author: '' };
   editId?: number;
 
@@ -81,25 +93,35 @@ private api = 'http://localhost:5187/api/Quotes';
 
   openForm() {
     this.form = { text: '', author: '' };
+    this.submitted = false;
     this.editing = false;
     this.showForm = true;
+  }
+
+  cancelForm() {
+    this.showForm = false;
+    this.submitted = false;
   }
 
   edit(q: Quote) {
     this.form = { ...q };
     this.editId = q.id;
+    this.submitted = false;
     this.editing = true;
     this.showForm = true;
   }
 
   save() {
+    this.submitted = true;
+    if (!this.form.text || !this.form.author) return;
+
     if (this.editing) {
       this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
-        this.load(); this.showForm = false;
+        this.load(); this.showForm = false; this.submitted = false;
       });
     } else {
       this.http.post(this.api, this.form).subscribe(() => {
-        this.load(); this.showForm = false;
+        this.load(); this.showForm = false; this.submitted = false;
       });
     }
   }
