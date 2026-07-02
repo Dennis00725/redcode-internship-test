@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { ToastService } from '../../core/toast.service';
 
 interface Quote { id?: number; text: string; author: string; }
 
@@ -86,7 +87,7 @@ export class QuotesComponent implements OnInit {
   form: Quote = { text: '', author: '' };
   editId?: number;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private toast: ToastService) {}
   ngOnInit() { this.load(); }
 
   load() { this.http.get<Quote[]>(this.api).subscribe(q => this.quotes = q); }
@@ -117,17 +118,26 @@ export class QuotesComponent implements OnInit {
 
     if (this.editing) {
       this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
-        this.load(); this.showForm = false; this.submitted = false;
+        this.load();
+        this.showForm = false;
+        this.submitted = false;
+        this.toast.show('Quote updated successfully!');
       });
     } else {
       this.http.post(this.api, this.form).subscribe(() => {
-        this.load(); this.showForm = false; this.submitted = false;
+        this.load();
+        this.showForm = false;
+        this.submitted = false;
+        this.toast.show('Quote added successfully!');
       });
     }
   }
 
   delete(id: number) {
     if (confirm('Delete this quote?'))
-      this.http.delete(`${this.api}/${id}`).subscribe(() => this.load());
+      this.http.delete(`${this.api}/${id}`).subscribe(() => {
+        this.load();
+        this.toast.show('Quote deleted!', 'danger');
+      });
   }
 }
