@@ -4,7 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ToastService } from '../../core/toast.service';
 
-interface Book { id?: number; title: string; author: string; publicationDate: string; }
+interface Book {
+  id?: number;
+  title: string;
+  author: string;
+  publicationDate: string;
+}
 
 @Component({
   selector: 'app-books',
@@ -25,37 +30,44 @@ interface Book { id?: number; title: string; author: string; publicationDate: st
         <div class="row g-3">
           <div class="col-md-4">
             <label class="form-label">Title</label>
-            <input 
+            <input
               class="form-control"
               [class.is-invalid]="submitted && !form.title"
-              [(ngModel)]="form.title" 
-              placeholder="Book title">
+              [(ngModel)]="form.title"
+              placeholder="Book title"
+            />
             <div class="invalid-feedback">Title is required.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Author</label>
-            <input 
+            <input
               class="form-control"
               [class.is-invalid]="submitted && !form.author"
-              [(ngModel)]="form.author" 
-              placeholder="Author name">
+              [(ngModel)]="form.author"
+              placeholder="Author name"
+            />
             <div class="invalid-feedback">Author is required.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Publication Date</label>
-            <input 
-              class="form-control" 
+            <input
+              class="form-control"
               type="date"
               [class.is-invalid]="submitted && !form.publicationDate"
-              [(ngModel)]="form.publicationDate">
+              [(ngModel)]="form.publicationDate"
+            />
             <div class="invalid-feedback">Publication date is required.</div>
           </div>
         </div>
         <div class="mt-3 d-flex gap-2">
-          <button class="btn btn-success" (click)="save()">
-            <i class="fas fa-save me-1"></i>{{ editing ? 'Update' : 'Save' }}
+          <button class="btn btn-success" (click)="save()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!loading" class="fas fa-save me-1"></i>
+            {{ loading ? 'Saving...' : editing ? 'Update' : 'Save' }}
           </button>
-          <button class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+          <button class="btn btn-secondary" (click)="cancelForm()" [disabled]="loading">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -77,13 +89,22 @@ interface Book { id?: number; title: string; author: string; publicationDate: st
               <tr *ngFor="let book of books">
                 <td>{{ book.title }}</td>
                 <td>{{ book.author }}</td>
-                <td>{{ book.publicationDate | date:'mediumDate' }}</td>
+                <td>{{ book.publicationDate | date: 'mediumDate' }}</td>
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-primary me-1" (click)="edit(book)">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-1"
+                    (click)="edit(book)"
+                    [disabled]="loading"
+                  >
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" (click)="delete(book.id!)">
-                    <i class="fas fa-trash"></i>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="delete(book.id!)"
+                    [disabled]="loading"
+                  >
+                    <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+                    <i *ngIf="!loading" class="fas fa-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -97,7 +118,7 @@ interface Book { id?: number; title: string; author: string; publicationDate: st
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class BooksComponent implements OnInit {
   private api = 'http://localhost:5187/api/Books';
@@ -105,13 +126,21 @@ export class BooksComponent implements OnInit {
   showForm = false;
   editing = false;
   submitted = false;
+  loading = false;
   form: Book = { title: '', author: '', publicationDate: '' };
   editId?: number;
 
-  constructor(private http: HttpClient, private toast: ToastService) {}
-  ngOnInit() { this.load(); }
+  constructor(
+    private http: HttpClient,
+    private toast: ToastService,
+  ) {}
+  ngOnInit() {
+    this.load();
+  }
 
-  load() { this.http.get<Book[]>(this.api).subscribe(b => this.books = b); }
+  load() {
+    this.http.get<Book[]>(this.api).subscribe((b) => (this.books = b));
+  }
 
   openForm() {
     this.form = { title: '', author: '', publicationDate: '' };
@@ -136,12 +165,14 @@ export class BooksComponent implements OnInit {
   save() {
     this.submitted = true;
     if (!this.form.title || !this.form.author || !this.form.publicationDate) return;
+    this.loading = true;
 
     if (this.editing) {
       this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
         this.load();
         this.showForm = false;
         this.submitted = false;
+        this.loading = false;
         this.toast.show('Book updated successfully!');
       });
     } else {
@@ -149,16 +180,20 @@ export class BooksComponent implements OnInit {
         this.load();
         this.showForm = false;
         this.submitted = false;
+        this.loading = false;
         this.toast.show('Book added successfully!');
       });
     }
   }
 
   delete(id: number) {
-    if (confirm('Delete this book?'))
+    if (confirm('Delete this book?')) {
+      this.loading = true;
       this.http.delete(`${this.api}/${id}`).subscribe(() => {
         this.load();
+        this.loading = false;
         this.toast.show('Book deleted!', 'danger');
       });
+    }
   }
 }

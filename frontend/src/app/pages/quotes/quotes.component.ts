@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ToastService } from '../../core/toast.service';
 
-interface Quote { id?: number; text: string; author: string; }
+interface Quote {
+  id?: number;
+  text: string;
+  author: string;
+}
 
 @Component({
   selector: 'app-quotes',
@@ -13,7 +17,7 @@ interface Quote { id?: number; text: string; author: string; }
   template: `
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2><i class="fas fa-quote-left me-2 text-warning"></i>My Quotes</h2>
-      <button class="btn btn-warning" (click)="openForm()">
+      <button class="btn btn-warning" (click)="openForm()" [disabled]="loading">
         <i class="fas fa-plus me-1"></i>Add Quote
       </button>
     </div>
@@ -24,28 +28,34 @@ interface Quote { id?: number; text: string; author: string; }
         <h5>{{ editing ? 'Edit Quote' : 'New Quote' }}</h5>
         <div class="mb-3">
           <label class="form-label">Quote</label>
-          <textarea 
+          <textarea
             class="form-control"
             [class.is-invalid]="submitted && !form.text"
-            [(ngModel)]="form.text" 
-            rows="3" 
-            placeholder="Enter quote text"></textarea>
+            [(ngModel)]="form.text"
+            rows="3"
+            placeholder="Enter quote text"
+          ></textarea>
           <div class="invalid-feedback">Quote text is required.</div>
         </div>
         <div class="mb-3">
           <label class="form-label">Author</label>
-          <input 
+          <input
             class="form-control"
             [class.is-invalid]="submitted && !form.author"
-            [(ngModel)]="form.author" 
-            placeholder="Who said this?">
+            [(ngModel)]="form.author"
+            placeholder="Who said this?"
+          />
           <div class="invalid-feedback">Author is required.</div>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-warning" (click)="save()">
-            <i class="fas fa-save me-1"></i>{{ editing ? 'Update' : 'Save' }}
+          <button class="btn btn-warning" (click)="save()" [disabled]="loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!loading" class="fas fa-save me-1"></i>
+            {{ loading ? 'Saving...' : editing ? 'Update' : 'Save' }}
           </button>
-          <button class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+          <button class="btn btn-secondary" (click)="cancelForm()" [disabled]="loading">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -63,11 +73,16 @@ interface Quote { id?: number; text: string; author: string; }
             </p>
           </div>
           <div class="card-footer d-flex justify-content-end gap-2">
-            <button class="btn btn-sm btn-outline-primary" (click)="edit(q)">
+            <button class="btn btn-sm btn-outline-primary" (click)="edit(q)" [disabled]="loading">
               <i class="fas fa-edit"></i>
             </button>
-            <button class="btn btn-sm btn-outline-danger" (click)="delete(q.id!)">
-              <i class="fas fa-trash"></i>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              (click)="delete(q.id!)"
+              [disabled]="loading"
+            >
+              <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+              <i *ngIf="!loading" class="fas fa-trash"></i>
             </button>
           </div>
         </div>
@@ -76,7 +91,7 @@ interface Quote { id?: number; text: string; author: string; }
         <i class="fas fa-comment-slash fa-2x d-block mb-2"></i>No quotes yet. Add your favorites!
       </div>
     </div>
-  `
+  `,
 })
 export class QuotesComponent implements OnInit {
   private api = 'http://localhost:5187/api/Quotes';
@@ -84,13 +99,21 @@ export class QuotesComponent implements OnInit {
   showForm = false;
   editing = false;
   submitted = false;
+  loading = false;
   form: Quote = { text: '', author: '' };
   editId?: number;
 
-  constructor(private http: HttpClient, private toast: ToastService) {}
-  ngOnInit() { this.load(); }
+  constructor(
+    private http: HttpClient,
+    private toast: ToastService,
+  ) {}
+  ngOnInit() {
+    this.load();
+  }
 
-  load() { this.http.get<Quote[]>(this.api).subscribe(q => this.quotes = q); }
+  load() {
+    this.http.get<Quote[]>(this.api).subscribe((q) => (this.quotes = q));
+  }
 
   openForm() {
     this.form = { text: '', author: '' };
@@ -115,12 +138,14 @@ export class QuotesComponent implements OnInit {
   save() {
     this.submitted = true;
     if (!this.form.text || !this.form.author) return;
+    this.loading = true;
 
     if (this.editing) {
       this.http.put(`${this.api}/${this.editId}`, this.form).subscribe(() => {
         this.load();
         this.showForm = false;
         this.submitted = false;
+        this.loading = false;
         this.toast.show('Quote updated successfully!');
       });
     } else {
@@ -128,16 +153,20 @@ export class QuotesComponent implements OnInit {
         this.load();
         this.showForm = false;
         this.submitted = false;
+        this.loading = false;
         this.toast.show('Quote added successfully!');
       });
     }
   }
 
   delete(id: number) {
-    if (confirm('Delete this quote?'))
+    if (confirm('Delete this quote?')) {
+      this.loading = true;
       this.http.delete(`${this.api}/${id}`).subscribe(() => {
         this.load();
+        this.loading = false;
         this.toast.show('Quote deleted!', 'danger');
       });
+    }
   }
 }
