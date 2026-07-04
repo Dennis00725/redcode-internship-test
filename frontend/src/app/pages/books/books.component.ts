@@ -104,9 +104,38 @@ interface Book {
           <table class="table table-hover mb-0">
             <thead class="table-primary">
               <tr>
-                <th><i class="fas fa-heading me-1"></i>Title</th>
-                <th><i class="fas fa-user me-1"></i>Author</th>
-                <th><i class="fas fa-calendar me-1"></i>Published</th>
+                <th style="cursor:pointer" (click)="sort('title')">
+                  <i class="fas fa-heading me-1"></i>Title
+                  <i
+                    class="fas ms-1"
+                    [class.fa-sort]="sortColumn !== 'title'"
+                    [class.fa-sort-up]="sortColumn === 'title' && sortDirection === 'asc'"
+                    [class.fa-sort-down]="sortColumn === 'title' && sortDirection === 'desc'"
+                  >
+                  </i>
+                </th>
+                <th style="cursor:pointer" (click)="sort('author')">
+                  <i class="fas fa-user me-1"></i>Author
+                  <i
+                    class="fas ms-1"
+                    [class.fa-sort]="sortColumn !== 'author'"
+                    [class.fa-sort-up]="sortColumn === 'author' && sortDirection === 'asc'"
+                    [class.fa-sort-down]="sortColumn === 'author' && sortDirection === 'desc'"
+                  >
+                  </i>
+                </th>
+                <th style="cursor:pointer" (click)="sort('publicationDate')">
+                  <i class="fas fa-calendar me-1"></i>Published
+                  <i
+                    class="fas ms-1"
+                    [class.fa-sort]="sortColumn !== 'publicationDate'"
+                    [class.fa-sort-up]="sortColumn === 'publicationDate' && sortDirection === 'asc'"
+                    [class.fa-sort-down]="
+                      sortColumn === 'publicationDate' && sortDirection === 'desc'
+                    "
+                  >
+                  </i>
+                </th>
                 <th class="text-end">Actions</th>
               </tr>
             </thead>
@@ -159,6 +188,8 @@ export class BooksComponent implements OnInit {
   editing = false;
   submitted = false;
   loading = false;
+  sortColumn = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   form: Book = { title: '', author: '', publicationDate: '' };
   editId?: number;
 
@@ -177,16 +208,36 @@ export class BooksComponent implements OnInit {
     });
   }
 
+  sort(column: string) {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.filterBooks();
+  }
+
   filterBooks() {
     const term = this.searchTerm.toLowerCase();
-    this.filteredBooks = this.books.filter(
+    let result = this.books.filter(
       (b) => b.title.toLowerCase().includes(term) || b.author.toLowerCase().includes(term),
     );
+
+    if (this.sortColumn) {
+      result = result.sort((a, b) => {
+        const valA = (a as any)[this.sortColumn].toLowerCase();
+        const valB = (b as any)[this.sortColumn].toLowerCase();
+        return this.sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+    }
+
+    this.filteredBooks = result;
   }
 
   clearSearch() {
     this.searchTerm = '';
-    this.filteredBooks = this.books;
+    this.filterBooks();
   }
 
   openForm() {
