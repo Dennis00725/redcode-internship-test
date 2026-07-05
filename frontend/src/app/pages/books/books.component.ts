@@ -83,7 +83,7 @@ interface Book {
             class="form-control border-start-0"
             [(ngModel)]="searchTerm"
             placeholder="Search by title or author..."
-            (ngModelChange)="filterBooks()"
+            (ngModelChange)="onSearch()"
           />
           <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="clearSearch()">
             <i class="fas fa-times"></i>
@@ -140,7 +140,7 @@ interface Book {
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let book of filteredBooks">
+              <tr *ngFor="let book of pagedBooks">
                 <td>{{ book.title }}</td>
                 <td>{{ book.author }}</td>
                 <td>{{ book.publicationDate | date: 'mediumDate' }}</td>
@@ -177,12 +177,45 @@ interface Book {
         </div>
       </div>
     </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="totalPages > 1">
+      <small class="text-muted"> Page {{ currentPage }} of {{ totalPages }} </small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="goToPage(1)">
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="goToPage(currentPage - 1)">
+              <i class="fas fa-angle-left"></i>
+            </button>
+          </li>
+          <li class="page-item" *ngFor="let p of pageNumbers" [class.active]="p === currentPage">
+            <button class="page-link" (click)="goToPage(p)">{{ p }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="goToPage(currentPage + 1)">
+              <i class="fas fa-angle-right"></i>
+            </button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="goToPage(totalPages)">
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
   `,
 })
 export class BooksComponent implements OnInit {
   private api = 'http://localhost:5187/api/Books';
   books: Book[] = [];
   filteredBooks: Book[] = [];
+  pagedBooks: Book[] = [];
   searchTerm = '';
   showForm = false;
   editing = false;
@@ -190,6 +223,10 @@ export class BooksComponent implements OnInit {
   loading = false;
   sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+  currentPage = 1;
+  pageSize = 5;
+  totalPages = 1;
+  pageNumbers: number[] = [];
   form: Book = { title: '', author: '', publicationDate: '' };
   editId?: number;
 
@@ -208,6 +245,11 @@ export class BooksComponent implements OnInit {
     });
   }
 
+  onSearch() {
+    this.currentPage = 1;
+    this.filterBooks();
+  }
+
   sort(column: string) {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -215,6 +257,7 @@ export class BooksComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
+    this.currentPage = 1;
     this.filterBooks();
   }
 
@@ -233,10 +276,25 @@ export class BooksComponent implements OnInit {
     }
 
     this.filteredBooks = result;
+    this.totalPages = Math.ceil(this.filteredBooks.length / this.pageSize);
+    this.pageNumbers = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    this.updatePage();
+  }
+
+  updatePage() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.pagedBooks = this.filteredBooks.slice(start, start + this.pageSize);
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePage();
   }
 
   clearSearch() {
     this.searchTerm = '';
+    this.currentPage = 1;
     this.filterBooks();
   }
 

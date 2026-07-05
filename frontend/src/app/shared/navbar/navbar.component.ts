@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-navbar',
@@ -11,7 +12,12 @@ import { CommonModule } from '@angular/common';
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
         <a class="navbar-brand" routerLink="/"><i class="fas fa-book-open me-2"></i>BookVault</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#nav"
+        >
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="nav">
@@ -19,6 +25,7 @@ import { CommonModule } from '@angular/common';
             <li class="nav-item">
               <a class="nav-link" routerLink="/books" routerLinkActive="active">
                 <i class="fas fa-book me-1"></i>Books
+                <span class="badge bg-white text-primary ms-1">{{ bookCount }}</span>
               </a>
             </li>
             <li class="nav-item">
@@ -31,21 +38,39 @@ import { CommonModule } from '@angular/common';
             <button class="btn btn-outline-light btn-sm" (click)="toggleDark()">
               <i class="fas" [class.fa-moon]="!dark()" [class.fa-sun]="dark()"></i>
             </button>
-            <button *ngIf="auth.isLoggedIn()" class="btn btn-outline-light btn-sm" (click)="auth.logout()">
+            <button
+              *ngIf="auth.isLoggedIn()"
+              class="btn btn-outline-light btn-sm"
+              (click)="auth.logout()"
+            >
               <i class="fas fa-sign-out-alt me-1"></i>Logout
             </button>
           </div>
         </div>
       </div>
     </nav>
-  `
+  `,
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   dark = signal(localStorage.getItem('darkMode') === 'true');
-  constructor(public auth: AuthService) {}
+  bookCount = 0;
+  private api = 'http://localhost:5187/api/Books';
+
+  constructor(
+    public auth: AuthService,
+    private http: HttpClient,
+  ) {}
+
+  ngOnInit() {
+    this.auth.isLoggedIn() && this.loadBookCount();
+  }
+
+  loadBookCount() {
+    this.http.get<any[]>(this.api).subscribe((b) => (this.bookCount = b.length));
+  }
 
   toggleDark() {
-    this.dark.update(v => !v);
+    this.dark.update((v) => !v);
     document.body.classList.toggle('dark-mode', this.dark());
     localStorage.setItem('darkMode', String(this.dark()));
   }
