@@ -11,9 +11,10 @@ import { CommonModule } from '@angular/common';
   styles: [
     `
       .login-wrapper {
-        min-height: 100vh;
+        min-height: calc(100vh - 56px);
         width: 100vw;
         margin-left: calc(-50vw + 50%);
+        margin-top: -1.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
