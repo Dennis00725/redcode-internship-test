@@ -29,12 +29,19 @@ import { CommonModule } from '@angular/common';
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('/darkmode-loginpage.png');
         background-size: cover;
         background-position: center center;
         background-repeat: no-repeat;
         animation: slowZoom 12s ease-in-out infinite alternate;
         z-index: 0;
+      }
+
+      .bg-dark-mode {
+        background-image: url('/darkmode-loginpage.png');
+      }
+
+      .bg-light-mode {
+        background-image: url('/lightmode-loginpage.png');
       }
 
       @keyframes slowZoom {
@@ -58,14 +65,25 @@ import { CommonModule } from '@angular/common';
         left: 0;
         width: 100%;
         height: 100%;
+        animation: flicker 3s ease-in-out infinite;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .flicker-dark {
         background: radial-gradient(
           ellipse at 52% 78%,
           rgba(255, 180, 50, 0.18) 0%,
           transparent 60%
         );
-        animation: flicker 3s ease-in-out infinite;
-        z-index: 1;
-        pointer-events: none;
+      }
+
+      .flicker-light {
+        background: radial-gradient(
+          ellipse at 50% 50%,
+          rgba(255, 255, 200, 0.15) 0%,
+          transparent 60%
+        );
       }
 
       @keyframes flicker {
@@ -89,10 +107,19 @@ import { CommonModule } from '@angular/common';
         }
       }
 
-      .particle {
+      .particle-dark {
         position: absolute;
         border-radius: 50%;
         background: rgba(255, 220, 100, 0.7);
+        animation: floatUp linear infinite;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .particle-light {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.8);
         animation: floatUp linear infinite;
         z-index: 2;
         pointer-events: none;
@@ -118,18 +145,21 @@ import { CommonModule } from '@angular/common';
       .glass-card {
         position: relative;
         z-index: 10;
-        background: rgba(10, 10, 30, 0.12) !important;
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 20px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
         animation: fadeInCard 1.2s ease forwards;
       }
 
+      .glass-card-dark {
+        background: rgba(10, 10, 30, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+      }
+
       .glass-card-light {
-        background: rgba(255, 255, 255, 0.75) !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
       }
 
@@ -163,8 +193,8 @@ import { CommonModule } from '@angular/common';
       }
 
       .form-control-light {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        background: rgba(255, 255, 255, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.6) !important;
         color: #000000 !important;
         border-radius: 10px;
       }
@@ -174,7 +204,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .form-control-light:focus {
-        background: #ffffff !important;
+        background: rgba(255, 255, 255, 0.7) !important;
         border-color: #0d6efd !important;
         box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
         color: #000000 !important;
@@ -204,8 +234,8 @@ import { CommonModule } from '@angular/common';
       }
 
       .glass-btn-light {
-        background: #0d6efd !important;
-        border: none !important;
+        background: rgba(13, 110, 253, 0.7) !important;
+        border: 1px solid rgba(13, 110, 253, 0.5) !important;
         color: #ffffff !important;
         border-radius: 10px;
         font-weight: 600;
@@ -213,7 +243,7 @@ import { CommonModule } from '@angular/common';
       }
 
       .glass-btn-light:hover {
-        background: #0b5ed7 !important;
+        background: rgba(13, 110, 253, 0.9) !important;
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
       }
@@ -221,24 +251,35 @@ import { CommonModule } from '@angular/common';
   ],
   template: `
     <div class="login-wrapper">
-      <!-- Background only in dark mode -->
-      <ng-container *ngIf="isDark">
-        <div class="bg-image"></div>
-        <div class="flicker-overlay"></div>
-        <div
-          class="particle"
-          *ngFor="let p of particles"
-          [style.left]="p.left"
-          [style.width]="p.size"
-          [style.height]="p.size"
-          [style.animation-duration]="p.duration"
-          [style.animation-delay]="p.delay"
-        ></div>
-      </ng-container>
+      <!-- Background for both modes -->
+      <div class="bg-image" [class.bg-dark-mode]="isDark" [class.bg-light-mode]="!isDark"></div>
+
+      <!-- Flicker overlay -->
+      <div
+        class="flicker-overlay"
+        [class.flicker-dark]="isDark"
+        [class.flicker-light]="!isDark"
+      ></div>
+
+      <!-- Floating particles -->
+      <div
+        [class.particle-dark]="isDark"
+        [class.particle-light]="!isDark"
+        *ngFor="let p of particles"
+        [style.left]="p.left"
+        [style.width]="p.size"
+        [style.height]="p.size"
+        [style.animation-duration]="p.duration"
+        [style.animation-delay]="p.delay"
+      ></div>
 
       <!-- Login Card -->
       <div class="col-md-4 col-sm-8 col-11" style="position:relative; z-index:10">
-        <div class="card glass-card p-2" [class.glass-card-light]="!isDark">
+        <div
+          class="card glass-card p-2"
+          [class.glass-card-dark]="isDark"
+          [class.glass-card-light]="!isDark"
+        >
           <div class="card-body p-4">
             <h3
               class="card-title text-center mb-1"
@@ -250,19 +291,19 @@ import { CommonModule } from '@angular/common';
             </h3>
             <h5
               class="text-center mb-4 fw-light"
-              [style.color]="isDark ? 'rgba(255,255,255,0.7)' : '#333333'"
+              [style.color]="isDark ? 'rgba(255,255,255,0.7)' : '#222222'"
             >
               Welcome Back
             </h5>
             <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
             <div class="mb-3">
-              <label class="form-label fw-500" [style.color]="isDark ? '#e0d5c0' : '#000000'">
+              <label class="form-label" [style.color]="isDark ? '#e0d5c0' : '#000000'">
                 Username
               </label>
               <input
+                class="form-control"
                 [class.form-control-dark]="isDark"
                 [class.form-control-light]="!isDark"
-                class="form-control"
                 [class.is-invalid]="submitted && !username"
                 [(ngModel)]="username"
                 placeholder="Enter username"
@@ -274,9 +315,9 @@ import { CommonModule } from '@angular/common';
                 Password
               </label>
               <input
+                class="form-control"
                 [class.form-control-dark]="isDark"
                 [class.form-control-light]="!isDark"
-                class="form-control"
                 type="password"
                 [class.is-invalid]="submitted && !password"
                 [(ngModel)]="password"
@@ -294,7 +335,7 @@ import { CommonModule } from '@angular/common';
             </button>
             <p
               class="text-center mt-3 mb-0"
-              [style.color]="isDark ? 'rgba(255,255,255,0.7)' : '#333333'"
+              [style.color]="isDark ? 'rgba(255,255,255,0.7)' : '#222222'"
             >
               No account?
               <a routerLink="/register" [style.color]="isDark ? '#ffd27d' : '#0d6efd'">
