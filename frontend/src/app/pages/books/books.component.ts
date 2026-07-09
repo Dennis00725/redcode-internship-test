@@ -9,6 +9,7 @@ interface Book {
   title: string;
   author: string;
   publicationDate: string;
+  genre: string;
 }
 
 @Component({
@@ -28,7 +29,7 @@ interface Book {
       <div class="card-body">
         <h5 class="card-title">{{ editing ? 'Edit Book' : 'New Book' }}</h5>
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Title</label>
             <input
               class="form-control"
@@ -38,7 +39,7 @@ interface Book {
             />
             <div class="invalid-feedback">Title is required.</div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Author</label>
             <input
               class="form-control"
@@ -48,7 +49,7 @@ interface Book {
             />
             <div class="invalid-feedback">Author is required.</div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Publication Date</label>
             <input
               class="form-control"
@@ -57,6 +58,18 @@ interface Book {
               [(ngModel)]="form.publicationDate"
             />
             <div class="invalid-feedback">Publication date is required.</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Genre</label>
+            <select
+              class="form-select"
+              [class.is-invalid]="submitted && !form.genre"
+              [(ngModel)]="form.genre"
+            >
+              <option value="">Select genre</option>
+              <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
+            </select>
+            <div class="invalid-feedback">Genre is required.</div>
           </div>
         </div>
         <div class="mt-3 d-flex gap-2">
@@ -72,28 +85,38 @@ interface Book {
       </div>
     </div>
 
-    <!-- Search Box -->
+    <!-- Search and Filter -->
     <div class="card mb-3 shadow-sm">
       <div class="card-body py-2">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0">
-            <i class="fas fa-search text-muted"></i>
-          </span>
-          <input
-            class="form-control border-start-0"
-            [(ngModel)]="searchTerm"
-            placeholder="Search by title or author..."
-            (ngModelChange)="onSearch()"
-          />
-          <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="clearSearch()">
-            <i class="fas fa-times"></i>
-          </button>
+        <div class="row g-2">
+          <div class="col-md-8">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input
+                class="form-control border-start-0"
+                [(ngModel)]="searchTerm"
+                placeholder="Search by title or author..."
+                (ngModelChange)="onSearch()"
+              />
+              <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" [(ngModel)]="selectedGenre" (ngModelChange)="onSearch()">
+              <option value="">All Genres</option>
+              <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Results count -->
-    <p class="text-muted small mb-2" *ngIf="searchTerm">
+    <p class="text-muted small mb-2" *ngIf="searchTerm || selectedGenre">
       Showing {{ filteredBooks.length }} of {{ books.length }} books
     </p>
 
@@ -136,6 +159,16 @@ interface Book {
                   >
                   </i>
                 </th>
+                <th style="cursor:pointer" (click)="sort('genre')">
+                  <i class="fas fa-tag me-1"></i>Genre
+                  <i
+                    class="fas ms-1"
+                    [class.fa-sort]="sortColumn !== 'genre'"
+                    [class.fa-sort-up]="sortColumn === 'genre' && sortDirection === 'asc'"
+                    [class.fa-sort-down]="sortColumn === 'genre' && sortDirection === 'desc'"
+                  >
+                  </i>
+                </th>
                 <th class="text-end">Actions</th>
               </tr>
             </thead>
@@ -144,6 +177,21 @@ interface Book {
                 <td>{{ book.title }}</td>
                 <td>{{ book.author }}</td>
                 <td>{{ book.publicationDate | date: 'mediumDate' }}</td>
+                <td>
+                  <span
+                    class="badge rounded-pill"
+                    [class.bg-primary]="book.genre === 'Fiction'"
+                    [class.bg-success]="book.genre === 'Science'"
+                    [class.bg-warning]="book.genre === 'History'"
+                    [class.bg-danger]="book.genre === 'Mystery'"
+                    [class.bg-info]="book.genre === 'Biography'"
+                    [class.bg-secondary]="book.genre === 'Technology'"
+                    [class.bg-dark]="book.genre === 'Philosophy'"
+                    [class.bg-primary]="book.genre === 'Romance'"
+                  >
+                    {{ book.genre }}
+                  </span>
+                </td>
                 <td class="text-end">
                   <button
                     class="btn btn-sm btn-outline-primary me-1"
@@ -162,12 +210,12 @@ interface Book {
                 </td>
               </tr>
               <tr *ngIf="filteredBooks.length === 0 && books.length > 0">
-                <td colspan="4" class="text-center text-muted py-4">
+                <td colspan="5" class="text-center text-muted py-4">
                   <i class="fas fa-search fa-2x d-block mb-2"></i>No books match your search.
                 </td>
               </tr>
               <tr *ngIf="books.length === 0">
-                <td colspan="4" class="text-center text-muted py-4">
+                <td colspan="5" class="text-center text-muted py-4">
                   <i class="fas fa-inbox fa-2x d-block mb-2"></i>No books yet. Add one!
                 </td>
               </tr>
@@ -254,6 +302,7 @@ export class BooksComponent implements OnInit {
   filteredBooks: Book[] = [];
   pagedBooks: Book[] = [];
   searchTerm = '';
+  selectedGenre = '';
   showForm = false;
   editing = false;
   submitted = false;
@@ -266,8 +315,23 @@ export class BooksComponent implements OnInit {
   pageSize = 5;
   totalPages = 1;
   pageNumbers: number[] = [];
-  form: Book = { title: '', author: '', publicationDate: '' };
+  form: Book = { title: '', author: '', publicationDate: '', genre: '' };
   editId?: number;
+
+  genres = [
+    'Fiction',
+    'Science',
+    'History',
+    'Mystery',
+    'Biography',
+    'Technology',
+    'Philosophy',
+    'Romance',
+    'Fantasy',
+    'Self-Help',
+    'Horror',
+    'Poetry',
+  ];
 
   constructor(
     private http: HttpClient,
@@ -303,7 +367,9 @@ export class BooksComponent implements OnInit {
   filterBooks() {
     const term = this.searchTerm.toLowerCase();
     let result = this.books.filter(
-      (b) => b.title.toLowerCase().includes(term) || b.author.toLowerCase().includes(term),
+      (b) =>
+        (b.title.toLowerCase().includes(term) || b.author.toLowerCase().includes(term)) &&
+        (this.selectedGenre === '' || b.genre === this.selectedGenre),
     );
 
     if (this.sortColumn) {
@@ -338,7 +404,7 @@ export class BooksComponent implements OnInit {
   }
 
   openForm() {
-    this.form = { title: '', author: '', publicationDate: '' };
+    this.form = { title: '', author: '', publicationDate: '', genre: '' };
     this.submitted = false;
     this.editing = false;
     this.showForm = true;
@@ -359,7 +425,8 @@ export class BooksComponent implements OnInit {
 
   save() {
     this.submitted = true;
-    if (!this.form.title || !this.form.author || !this.form.publicationDate) return;
+    if (!this.form.title || !this.form.author || !this.form.publicationDate || !this.form.genre)
+      return;
     this.loading = true;
 
     if (this.editing) {
