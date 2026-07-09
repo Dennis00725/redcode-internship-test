@@ -154,11 +154,10 @@ interface Book {
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger"
-                    (click)="delete(book.id!)"
+                    (click)="confirmDelete(book)"
                     [disabled]="loading"
                   >
-                    <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
-                    <i *ngIf="!loading" class="fas fa-trash"></i>
+                    <i class="fas fa-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -180,7 +179,7 @@ interface Book {
 
     <!-- Pagination -->
     <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="totalPages > 1">
-      <small class="text-muted"> Page {{ currentPage }} of {{ totalPages }} </small>
+      <small class="text-muted">Page {{ currentPage }} of {{ totalPages }}</small>
       <nav>
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item" [class.disabled]="currentPage === 1">
@@ -209,6 +208,44 @@ interface Book {
         </ul>
       </nav>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      class="modal fade"
+      [class.show]="showModal"
+      [style.display]="showModal ? 'block' : 'none'"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-0">
+            <h5 class="modal-title text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>Delete Book
+            </h5>
+            <button class="btn-close" (click)="showModal = false"></button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <i class="fas fa-trash fa-3x text-danger mb-3 d-block"></i>
+            <p class="mb-1">Are you sure you want to delete</p>
+            <strong>"{{ bookToDelete?.title }}"</strong>
+            <p class="text-muted small mt-2">This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-secondary" (click)="showModal = false">
+              <i class="fas fa-times me-1"></i>Cancel
+            </button>
+            <button class="btn btn-danger" (click)="deleteConfirmed()" [disabled]="loading">
+              <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!loading" class="fas fa-trash me-1"></i>
+              {{ loading ? 'Deleting...' : 'Yes, Delete' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Backdrop -->
+    <div class="modal-backdrop fade show" *ngIf="showModal" (click)="showModal = false"></div>
   `,
 })
 export class BooksComponent implements OnInit {
@@ -221,6 +258,8 @@ export class BooksComponent implements OnInit {
   editing = false;
   submitted = false;
   loading = false;
+  showModal = false;
+  bookToDelete: Book | null = null;
   sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
   currentPage = 1;
@@ -342,14 +381,20 @@ export class BooksComponent implements OnInit {
     }
   }
 
-  delete(id: number) {
-    if (confirm('Delete this book?')) {
-      this.loading = true;
-      this.http.delete(`${this.api}/${id}`).subscribe(() => {
-        this.load();
-        this.loading = false;
-        this.toast.show('Book deleted!', 'danger');
-      });
-    }
+  confirmDelete(book: Book) {
+    this.bookToDelete = book;
+    this.showModal = true;
+  }
+
+  deleteConfirmed() {
+    if (!this.bookToDelete) return;
+    this.loading = true;
+    this.http.delete(`${this.api}/${this.bookToDelete.id}`).subscribe(() => {
+      this.load();
+      this.loading = false;
+      this.showModal = false;
+      this.bookToDelete = null;
+      this.toast.show('Book deleted!', 'danger');
+    });
   }
 }
