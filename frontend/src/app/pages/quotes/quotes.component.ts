@@ -94,7 +94,7 @@ interface Quote {
   `,
 })
 export class QuotesComponent implements OnInit {
-  private api = 'http://localhost:5187/api/Quotes';
+  private api = 'https://hogwards-vault.onrender.com/api/Quotes';
   quotes: Quote[] = [];
   showForm = false;
   editing = false;

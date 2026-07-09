@@ -297,7 +297,7 @@ interface Book {
   `,
 })
 export class BooksComponent implements OnInit {
-  private api = 'http://localhost:5187/api/Books';
+  private api = 'https://hogwards-vault.onrender.com/api/Books';
   books: Book[] = [];
   filteredBooks: Book[] = [];
   pagedBooks: Book[] = [];

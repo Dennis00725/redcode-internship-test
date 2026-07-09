@@ -54,7 +54,7 @@ import { HttpClient } from '@angular/common/http';
 export class NavbarComponent implements OnInit {
   dark = signal(localStorage.getItem('darkMode') === 'true');
   bookCount = 0;
-  private api = 'http://localhost:5187/api/Books';
+  private api = 'https://hogwards-vault.onrender.com/api/Books';
 
   constructor(
     public auth: AuthService,
