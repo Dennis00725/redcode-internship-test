@@ -1,5 +1,5 @@
 import { Component, signal, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -9,7 +9,15 @@ import { HttpClient } from '@angular/common/http';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, CommonModule],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav
+      class="navbar navbar-expand-lg"
+      [class.navbar-dark]="isDark || isAuthPage"
+      [class.navbar-light]="!isDark && !isAuthPage"
+      [class.bg-primary]="!isAuthPage && !isDark"
+      [style.background]="isAuthPage ? 'rgba(0,0,0,0.15)' : isDark ? '#16213e' : ''"
+      [style.backdrop-filter]="isAuthPage ? 'blur(10px)' : 'none'"
+      [style.border-bottom]="isAuthPage ? '1px solid rgba(255,255,255,0.1)' : 'none'"
+    >
       <div class="container">
         <a class="navbar-brand" routerLink="/"><i class="fas fa-book-open me-2"></i>BookVault</a>
         <button
@@ -38,6 +46,9 @@ import { HttpClient } from '@angular/common/http';
             <button class="btn btn-outline-light btn-sm" (click)="toggleDark()">
               <i class="fas" [class.fa-moon]="!dark()" [class.fa-sun]="dark()"></i>
             </button>
+            <a *ngIf="auth.isLoggedIn()" routerLink="/profile" class="btn btn-outline-light btn-sm">
+              <i class="fas fa-user me-1"></i>{{ username }}
+            </a>
             <button
               *ngIf="auth.isLoggedIn()"
               class="btn btn-outline-light btn-sm"
@@ -54,19 +65,46 @@ import { HttpClient } from '@angular/common/http';
 export class NavbarComponent implements OnInit {
   dark = signal(localStorage.getItem('darkMode') === 'true');
   bookCount = 0;
+  isAuthPage = false;
+  username = '';
   private api = 'https://hogwards-vault.onrender.com/api/Books';
+  private authApi = 'https://hogwards-vault.onrender.com/api/Auth';
+
+  get isDark(): boolean {
+    return document.body.classList.contains('dark-mode');
+  }
 
   constructor(
     public auth: AuthService,
     private http: HttpClient,
+    private router: Router,
   ) {}
 
   ngOnInit() {
-    this.auth.isLoggedIn() && this.loadBookCount();
+    if (this.auth.isLoggedIn()) {
+      this.loadBookCount();
+      this.loadUsername();
+    }
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.isAuthPage = event.url === '/login' || event.url === '/register';
+        if (this.auth.isLoggedIn()) {
+          this.loadBookCount();
+          this.loadUsername();
+        }
+      }
+    });
   }
 
   loadBookCount() {
     this.http.get<any[]>(this.api).subscribe((b) => (this.bookCount = b.length));
+  }
+
+  loadUsername() {
+    this.http.get<any>(`${this.authApi}/profile`).subscribe({
+      next: (data) => (this.username = data.username),
+      error: () => (this.username = ''),
+    });
   }
 
   toggleDark() {
