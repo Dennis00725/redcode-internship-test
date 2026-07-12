@@ -1,7 +1,9 @@
 using backend.Data;
 using backend.Models;
 using backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace backend.Controllers;
 
@@ -11,6 +13,7 @@ public class AuthController(AppDbContext db, TokenService tokenService) : Contro
 {
     public record RegisterDto(string Username, string Password);
     public record LoginDto(string Username, string Password);
+    public record ChangePasswordDto(string CurrentPassword, string NewPassword);
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
@@ -36,5 +39,31 @@ public class AuthController(AppDbContext db, TokenService tokenService) : Contro
             return Unauthorized("Invalid credentials.");
 
         return Ok(new { token = tokenService.CreateToken(user) });
+    }
+
+    [Authorize]
+    [HttpGet("profile")]
+    public IActionResult GetProfile()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = db.Users.FirstOrDefault(u => u.Id == userId);
+        if (user == null) return NotFound();
+        return Ok(new { user.Id, user.Username });
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var user = db.Users.FirstOrDefault(u => u.Id == userId);
+        if (user == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+            return BadRequest("Current password is incorrect.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        await db.SaveChangesAsync();
+        return Ok(new { message = "Password changed successfully." });
     }
 }
