@@ -155,3 +155,9 @@ C:\Users\jessn\Documents\redconsulting-test\backend\obj\Debug\net9.0\refint\back
 C:\Users\jessn\Documents\redconsulting-test\backend\obj\Debug\net9.0\backend.pdb
 C:\Users\jessn\Documents\redconsulting-test\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 C:\Users\jessn\Documents\redconsulting-test\backend\obj\Debug\net9.0\ref\backend.dll
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\angular.json
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\package-lock.json
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\package.json
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\tsconfig.app.json
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\tsconfig.json
+C:\Users\jessn\Documents\redconsulting-test\backend\bin\Debug\net9.0\frontend\tsconfig.spec.json
