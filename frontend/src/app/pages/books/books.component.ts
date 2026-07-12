@@ -10,6 +10,8 @@ interface Book {
   author: string;
   publicationDate: string;
   genre: string;
+  readingStatus: string;
+  rating: number;
 }
 
 @Component({
@@ -244,6 +246,21 @@ interface Book {
         color: #ffc850;
         font-family: Georgia, serif;
       }
+
+      .star {
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: transform 0.1s;
+      }
+      .star:hover {
+        transform: scale(1.2);
+      }
+      .star-filled {
+        color: #ffc107;
+      }
+      .star-empty {
+        color: #aaaaaa;
+      }
     `,
   ],
   template: `
@@ -275,11 +292,7 @@ interface Book {
       <div class="content-area">
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2
-            class="page-title-light"
-            [class.page-title-light]="!isDark"
-            [class.page-title-dark]="isDark"
-          >
+          <h2 [class.page-title-light]="!isDark" [class.page-title-dark]="isDark">
             <i class="fas fa-book me-2"></i>Books
           </h2>
           <button
@@ -304,7 +317,7 @@ interface Book {
               {{ editing ? 'Edit Book' : 'New Book' }}
             </h5>
             <div class="row g-3">
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
                   >Title</label
                 >
@@ -318,7 +331,7 @@ interface Book {
                 />
                 <div class="invalid-feedback">Title is required.</div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
                   >Author</label
                 >
@@ -332,7 +345,7 @@ interface Book {
                 />
                 <div class="invalid-feedback">Author is required.</div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
                   >Publication Date</label
                 >
@@ -346,7 +359,7 @@ interface Book {
                 />
                 <div class="invalid-feedback">Date is required.</div>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-4">
                 <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
                   >Genre</label
                 >
@@ -361,6 +374,37 @@ interface Book {
                   <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
                 </select>
                 <div class="invalid-feedback">Genre is required.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
+                  >Reading Status</label
+                >
+                <select
+                  class="form-select"
+                  [class.scroll-input-light]="!isDark"
+                  [class.scroll-input-dark]="isDark"
+                  [(ngModel)]="form.readingStatus"
+                >
+                  <option value="Want to Read">📋 Want to Read</option>
+                  <option value="Reading">📖 Reading</option>
+                  <option value="Finished">✅ Finished</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" [class.label-light]="!isDark" [class.label-dark]="isDark"
+                  >Rating</label
+                >
+                <div class="d-flex gap-1 mt-1">
+                  <span
+                    *ngFor="let star of [1, 2, 3, 4, 5]"
+                    class="star"
+                    [class.star-filled]="star <= form.rating"
+                    [class.star-empty]="star > form.rating"
+                    (click)="form.rating = star"
+                  >
+                    <i class="fas fa-star"></i>
+                  </span>
+                </div>
               </div>
             </div>
             <div class="mt-3 d-flex gap-2">
@@ -388,7 +432,7 @@ interface Book {
         >
           <div class="card-body py-2">
             <div class="row g-2">
-              <div class="col-md-8">
+              <div class="col-md-5">
                 <div class="input-group">
                   <span
                     class="input-group-text border-end-0"
@@ -426,6 +470,20 @@ interface Book {
                   <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
                 </select>
               </div>
+              <div class="col-md-3">
+                <select
+                  class="form-select"
+                  [class.scroll-input-light]="!isDark"
+                  [class.scroll-input-dark]="isDark"
+                  [(ngModel)]="selectedStatus"
+                  (ngModelChange)="onSearch()"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Want to Read">📋 Want to Read</option>
+                  <option value="Reading">📖 Reading</option>
+                  <option value="Finished">✅ Finished</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -433,7 +491,7 @@ interface Book {
         <!-- Results count -->
         <p
           class="small mb-2"
-          *ngIf="searchTerm || selectedGenre"
+          *ngIf="searchTerm || selectedGenre || selectedStatus"
           [style.color]="isDark ? '#ffc850' : '#8B6914'"
         >
           Showing {{ filteredBooks.length }} of {{ books.length }} books
@@ -484,27 +542,14 @@ interface Book {
                       >
                       </i>
                     </th>
-                    <th
-                      style="cursor:pointer"
-                      (click)="sort('publicationDate')"
-                      [class.label-light]="!isDark"
-                      [class.label-dark]="isDark"
-                    >
-                      <i class="fas fa-calendar me-1"></i>Published
-                      <i
-                        class="fas ms-1"
-                        [class.fa-sort]="sortColumn !== 'publicationDate'"
-                        [class.fa-sort-up]="
-                          sortColumn === 'publicationDate' && sortDirection === 'asc'
-                        "
-                        [class.fa-sort-down]="
-                          sortColumn === 'publicationDate' && sortDirection === 'desc'
-                        "
-                      >
-                      </i>
-                    </th>
                     <th [class.label-light]="!isDark" [class.label-dark]="isDark">
                       <i class="fas fa-tag me-1"></i>Genre
+                    </th>
+                    <th [class.label-light]="!isDark" [class.label-dark]="isDark">
+                      <i class="fas fa-bookmark me-1"></i>Status
+                    </th>
+                    <th [class.label-light]="!isDark" [class.label-dark]="isDark">
+                      <i class="fas fa-star me-1"></i>Rating
                     </th>
                     <th class="text-end" [class.label-light]="!isDark" [class.label-dark]="isDark">
                       Actions
@@ -518,7 +563,6 @@ interface Book {
                   >
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
-                    <td>{{ book.publicationDate | date: 'mediumDate' }}</td>
                     <td>
                       <span
                         class="badge rounded-pill"
@@ -531,6 +575,32 @@ interface Book {
                         [class.bg-dark]="book.genre === 'Philosophy'"
                       >
                         {{ book.genre }}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        class="badge"
+                        [class.bg-warning]="book.readingStatus === 'Want to Read'"
+                        [class.bg-primary]="book.readingStatus === 'Reading'"
+                        [class.bg-success]="book.readingStatus === 'Finished'"
+                      >
+                        {{
+                          book.readingStatus === 'Want to Read'
+                            ? '📋'
+                            : book.readingStatus === 'Reading'
+                              ? '📖'
+                              : '✅'
+                        }}
+                        {{ book.readingStatus }}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        *ngFor="let star of [1, 2, 3, 4, 5]"
+                        [style.color]="star <= book.rating ? '#ffc107' : '#aaaaaa'"
+                        style="font-size: 0.85rem;"
+                      >
+                        <i class="fas fa-star"></i>
                       </span>
                     </td>
                     <td class="text-end">
@@ -555,7 +625,7 @@ interface Book {
                   </tr>
                   <tr *ngIf="filteredBooks.length === 0 && books.length > 0">
                     <td
-                      colspan="5"
+                      colspan="6"
                       class="text-center py-4"
                       [style.color]="isDark ? '#ffc850' : '#8B6914'"
                     >
@@ -564,7 +634,7 @@ interface Book {
                   </tr>
                   <tr *ngIf="books.length === 0">
                     <td
-                      colspan="5"
+                      colspan="6"
                       class="text-center py-4"
                       [style.color]="isDark ? '#ffc850' : '#8B6914'"
                     >
@@ -613,6 +683,18 @@ interface Book {
               </li>
             </ul>
           </nav>
+        </div>
+
+        <!-- Export PDF Button -->
+        <div class="mt-3 text-end">
+          <button
+            class="btn"
+            [class.scroll-btn-light]="!isDark"
+            [class.scroll-btn-dark]="isDark"
+            (click)="exportPDF()"
+          >
+            <i class="fas fa-file-pdf me-1"></i>Export to PDF
+          </button>
         </div>
       </div>
 
@@ -670,6 +752,7 @@ export class BooksComponent implements OnInit {
   pagedBooks: Book[] = [];
   searchTerm = '';
   selectedGenre = '';
+  selectedStatus = '';
   showForm = false;
   editing = false;
   submitted = false;
@@ -683,7 +766,14 @@ export class BooksComponent implements OnInit {
   totalPages = 1;
   pageNumbers: number[] = [];
   particles: any[] = [];
-  form: Book = { title: '', author: '', publicationDate: '', genre: '' };
+  form: Book = {
+    title: '',
+    author: '',
+    publicationDate: '',
+    genre: '',
+    readingStatus: 'Want to Read',
+    rating: 0,
+  };
   editId?: number;
 
   genres = [
@@ -752,13 +842,14 @@ export class BooksComponent implements OnInit {
     let result = this.books.filter(
       (b) =>
         (b.title.toLowerCase().includes(term) || b.author.toLowerCase().includes(term)) &&
-        (this.selectedGenre === '' || b.genre === this.selectedGenre),
+        (this.selectedGenre === '' || b.genre === this.selectedGenre) &&
+        (this.selectedStatus === '' || b.readingStatus === this.selectedStatus),
     );
 
     if (this.sortColumn) {
       result = result.sort((a, b) => {
-        const valA = (a as any)[this.sortColumn].toLowerCase();
-        const valB = (b as any)[this.sortColumn].toLowerCase();
+        const valA = (a as any)[this.sortColumn].toString().toLowerCase();
+        const valB = (b as any)[this.sortColumn].toString().toLowerCase();
         return this.sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
       });
     }
@@ -787,7 +878,14 @@ export class BooksComponent implements OnInit {
   }
 
   openForm() {
-    this.form = { title: '', author: '', publicationDate: '', genre: '' };
+    this.form = {
+      title: '',
+      author: '',
+      publicationDate: '',
+      genre: '',
+      readingStatus: 'Want to Read',
+      rating: 0,
+    };
     this.submitted = false;
     this.editing = false;
     this.showForm = true;
@@ -846,5 +944,57 @@ export class BooksComponent implements OnInit {
       this.bookToDelete = null;
       this.toast.show('Book deleted!', 'danger');
     });
+  }
+
+  exportPDF() {
+    const printContent = `
+      <html>
+        <head>
+          <title>BookVault - My Books</title>
+          <style>
+            body { font-family: Georgia, serif; padding: 20px; }
+            h1 { color: #5c3d0a; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #c8960a; color: white; padding: 10px; text-align: left; }
+            td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+            tr:nth-child(even) { background: #fff8e7; }
+            .stars { color: #ffc107; }
+          </style>
+        </head>
+        <body>
+          <h1>📚 BookVault - My Books</h1>
+          <p style="text-align:center">Generated on ${new Date().toLocaleDateString()}</p>
+          <table>
+            <tr>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Genre</th>
+              <th>Status</th>
+              <th>Rating</th>
+            </tr>
+            ${this.books
+              .map(
+                (b) => `
+              <tr>
+                <td>${b.title}</td>
+                <td>${b.author}</td>
+                <td>${b.genre}</td>
+                <td>${b.readingStatus}</td>
+                <td class="stars">${'★'.repeat(b.rating)}${'☆'.repeat(5 - b.rating)}</td>
+              </tr>
+            `,
+              )
+              .join('')}
+          </table>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+    }
   }
 }
