@@ -7,8 +7,19 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+// Use PostgreSQL if DATABASE_URL is set, otherwise SQLite
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseNpgsql(databaseUrl));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+}
 
 builder.Services.AddScoped<TokenService>();
 
