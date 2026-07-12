@@ -139,6 +139,47 @@ redconsulting-test/
 
 ---
 
+## 📸 Screenshots
+
+### 🌙 Dark Mode Login
+![Dark Mode Login](screenshots/darkmode%20loginpage.png)
+
+### ☀️ Light Mode Login
+![Light Mode Login](screenshots/light%20mode%20loginpage.png)
+
+### 📝 Register Page
+![Register](screenshots/register.png)
+
+### 📚 Books Page
+![Books Page](screenshots/book%20page.png)
+
+### ➕ Add New Book
+![Add Book](screenshots/add%20book.png)
+
+### 🔄 Sort Books
+![Sort Books](screenshots/sort%20books.png)
+
+### 📊 Sorted View
+![Sort](screenshots/sort.png)
+
+### 💬 Quotes Page
+![Quotes Page](screenshots/quotes%20page.png)
+
+### 🗑️ Delete Confirmation Modal
+![Delete Confirmation](screenshots/delete%20confirmation.png)
+
+### 📄 Export PDF
+![Export PDF](screenshots/export%20pdf.png)
+
+### 👤 Profile Page
+![Profile](screenshots/profile.png)
+
+### 📱 Mobile View
+![Mobile View](screenshots/mobile%20view.png)
+
+
+
+
 ## 👨‍💻 Developer
 
 **Dennis Daniel**
